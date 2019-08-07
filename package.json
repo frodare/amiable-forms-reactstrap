@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "dependencies": {
     "addstrap": "1.1.0",
-    "amiable-forms": "0.1.1",
+    "amiable-forms": "0.1.2",
     "bootstrap": "4.3.1",
     "react": "16.8.6",
     "react-dom": "16.8.6",

@@ -15,14 +15,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles.scss";
 
 const Field = ({ name, label, validators, parse, format, placeholder }) => {
-  const { inputProps, valid, error, touched } = useField({
+  const { inputProps, valid, error, touched, submitted } = useField({
     name,
     validators,
     parse,
     format
   });
-  const invalidFlag = touched && !valid ? true : undefined;
-  const validFlag = touched && valid ? true : undefined;
+  const invalidFlag = (submitted || touched) && !valid ? true : undefined;
+  const validFlag = (submitted || touched) && valid ? true : undefined;
   return (
     <FormGroup>
       <Label>{label}</Label>
@@ -63,12 +63,14 @@ const validEmail = v =>
     : "invalid email address";
 
 const processForm = values => console.log("form processed", values);
+const processInvalid = (meta, fields) =>
+  console.log("form invalid", meta, fields);
 
 const TestForm = () => (
   <Container>
     <h1>amiable-forms</h1>
     <p>An example of an amiable-form created with reactstrap.</p>
-    <Form process={processForm}>
+    <Form process={processForm} processInvalid={processInvalid}>
       <Row>
         <Col>
           <Field

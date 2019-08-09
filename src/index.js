@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { Form, useField, useForm } from "amiable-forms";
+import { Form, useField, useForm, Debug } from "amiable-forms";
 import {
   Input,
   Container,
@@ -38,20 +38,35 @@ const Field = ({ name, label, validators, parse, format, placeholder }) => {
 };
 
 const SubmitButtons = () => {
-  const { onSubmit, clear } = useForm();
+  const { onSubmit, clear, setValues } = useForm();
+  const name = {name: { first: 'John', last: 'Smith' }}
   return (
-    <Row className="py-4">
-      <Col>
-        <Button block outline onClick={clear}>
-          Clear
-        </Button>
-      </Col>
-      <Col>
-        <Button block color="primary" onClick={onSubmit}>
-          Submit
-        </Button>
-      </Col>
-    </Row>
+    <>
+      <Row className="py-4">
+        <Col>
+          <Button block color="light" onClick={() => setValues(name)}>
+            Set Name
+          </Button>
+        </Col>
+        <Col>
+          <Button block color="light" onClick={() => setValues(name, { merge: true, keepMeta: true })}>
+            Set Name (merge/keepMeta)
+          </Button>
+        </Col>
+      </Row>
+      <Row className="py-4">
+        <Col>
+          <Button block outline onClick={clear}>
+            Clear
+          </Button>
+        </Col>
+        <Col>
+          <Button block color="primary" onClick={onSubmit}>
+            Submit
+          </Button>
+        </Col>
+      </Row>
+    </>
   );
 };
 
@@ -66,11 +81,17 @@ const processForm = values => console.log("form processed", values);
 const processInvalid = (meta, fields) =>
   console.log("form invalid", meta, fields);
 
+const initialValues = {
+  name: {
+    first: 'Initial First Name'
+  }
+}
+
 const TestForm = () => (
   <Container>
     <h1>amiable-forms</h1>
     <p>An example of an amiable-form created with reactstrap.</p>
-    <Form process={processForm} processInvalid={processInvalid}>
+    <Form process={processForm} processInvalid={processInvalid} initialValues={initialValues}>
       <Row>
         <Col>
           <Field
@@ -95,6 +116,7 @@ const TestForm = () => (
         validators={[required, validEmail]}
       />
       <SubmitButtons />
+      <Debug />
     </Form>
   </Container>
 );

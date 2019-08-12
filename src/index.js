@@ -1,6 +1,6 @@
-import React from "react";
+import React, {useState} from "react";
 import ReactDOM from "react-dom";
-import { Form, useField, useForm, Debug } from "amiable-forms";
+import { Form, useField, useForm, Debug, useArrayField } from "amiable-forms";
 import {
   Input,
   Container,
@@ -13,9 +13,12 @@ import {
 } from "reactstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles.scss";
+import get from 'amiable-forms/dist/util/get'
+import set from 'amiable-forms/dist/util/set'
+import clone from 'amiable-forms/dist/util/clone'
 
 const Field = ({ name, label, validators, parse, format, placeholder }) => {
-  const { inputProps, valid, error, touched, submitted } = useField({
+  const { value, onChange, onBlur, valid, error, touched, submitted } = useField({
     name,
     validators,
     parse,
@@ -27,18 +30,44 @@ const Field = ({ name, label, validators, parse, format, placeholder }) => {
     <FormGroup>
       <Label>{label}</Label>
       <Input
-        {...inputProps}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
         valid={validFlag}
         invalid={invalidFlag}
         placeholder={placeholder}
       />
-      <FormFeedback invalid={invalidFlag}>{error}</FormFeedback>
+      { invalidFlag ? <FormFeedback invalid=''><div>{error}</div></FormFeedback> : <FormFeedback /> }
     </FormGroup>
   );
 };
 
+const Users = () => {
+  const { push, pop, elements } = useArrayField({ name: 'users', Component: Field, props: { label: 'Test'} })
+  return (
+    <>
+      {elements}
+      <div>
+      <button onClick={push}>Add</button>
+      <button onClick={pop}>Remove</button>
+      </div>
+    </>
+  )
+}
+
+
+const RepeatedField = ({ prefix }) => {
+  const [count, setCount] = useState(2)
+  return (
+    <>
+      {new Array(count).fill('').map((_, i) => <Field key={i} name={prefix + '_' + i} />)}
+      <button onClick={() => setCount(count - 1)}>remove</button><button onClick={() => setCount(count + 1)}>add</button>
+    </>
+  )
+}
+
 const SubmitButtons = () => {
-  const { onSubmit, clear, setValues } = useForm();
+  const { onSubmit, clear, setValues } = useForm({ shouldUpdate: () => false });
   const name = {name: { first: 'John', last: 'Smith' }}
   return (
     <>
@@ -70,10 +99,12 @@ const SubmitButtons = () => {
   );
 };
 
-const required = v => (v !== 0 && !v ? "Required" : null);
-const minLength = l => v => (v || "").length < l;
+const EMAIL_PATTERN = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+const required = v => (v !== 0 && !v ? "required" : null);
+const minLength = l => v => (v || "").length < l ? "length must be at least " + l : undefined;
 const validEmail = v =>
-  /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v)
+  EMAIL_PATTERN.test(v)
     ? undefined
     : "invalid email address";
 
@@ -87,11 +118,19 @@ const initialValues = {
   }
 }
 
+const transform = ({ next, current }) => {
+  if (get(next, 'values.name.first') !== 'charles') return next
+  if (get(next, 'values.name.last')) return next
+  if ((next.fields['name.last'] || {}).touched) return next
+  const out = clone(next)
+  return out
+}
+
 const TestForm = () => (
   <Container>
     <h1>amiable-forms</h1>
     <p>An example of an amiable-form created with reactstrap.</p>
-    <Form process={processForm} processInvalid={processInvalid} initialValues={initialValues}>
+    <Form process={processForm} processInvalid={processInvalid} initialValues={initialValues} transform={transform}>
       <Row>
         <Col>
           <Field
@@ -109,12 +148,18 @@ const TestForm = () => (
         </Col>
       </Row>
 
-      <Field
-        label="Email"
-        name="email"
+      <Users />
+
+      {new Array(1).fill('').map((_,i) => <Field
+        key={i}
+        label={"Email " + i}
+        name={"email_" + i}
         placeholder="email"
         validators={[required, validEmail]}
-      />
+      />)}
+
+      <RepeatedField prefix={'repeated_field'} count={5} />
+
       <SubmitButtons />
       <Debug />
     </Form>
